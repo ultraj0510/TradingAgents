@@ -79,3 +79,38 @@ def test_last_trading_day_us_uses_weekends_only():
     # US市場: 平日は常にTrueを返す（祝日チェックは現在対象外）
     friday = datetime.date(2025, 1, 3)
     assert is_trading_day(friday, "us") is True
+
+
+# ── news_japan_rss ───────────────────────────────────────────────────────────
+
+def test_extract_code_from_ticker():
+    from tradingagents.dataflows.news_japan_rss import _extract_stock_code
+    assert _extract_stock_code("7203.T") == "7203"
+    assert _extract_stock_code("6758.T") == "6758"
+
+def test_get_news_japan_rss_fallback_on_error(monkeypatch):
+    """When RSS fetch fails, should fall back to yfinance news."""
+    import tradingagents.dataflows.news_japan_rss as mod
+
+    # Force feedparser to raise an exception
+    def bad_parse(url, *a, **kw):
+        raise RuntimeError("network error")
+
+    monkeypatch.setattr(mod.feedparser, "parse", bad_parse)
+
+    # Fallback should return a string (not raise)
+    result = mod.get_news_japan_rss("7203.T", "2024-01-01", "2024-01-31")
+    assert isinstance(result, str)
+
+def test_get_global_news_japan_returns_string(monkeypatch):
+    """Should always return a string."""
+    import tradingagents.dataflows.news_japan_rss as mod
+
+    # Simulate empty RSS feed
+    class FakeResult:
+        entries = []
+
+    monkeypatch.setattr(mod.feedparser, "parse", lambda *a, **kw: FakeResult())
+
+    result = mod.get_global_news_japan("2024-01-15")
+    assert isinstance(result, str)
