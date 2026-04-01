@@ -63,14 +63,17 @@ def build_instrument_context(ticker: str) -> str:
     )
 
     if market == "japan":
+        open_t = profile.trading_hours["open"]
+        close_t = profile.trading_hours["close"]
         base += (
             f" This is a Japanese stock traded on the Tokyo Stock Exchange (TSE/JPX). "
-            f"All prices and financial figures are denominated in Japanese Yen (JPY). "
+            f"All prices and financial figures are denominated in {profile.currency}. "
             f"Trading unit is typically 100 shares (単元株). "
-            f"Market hours are 09:00–15:30 JST (Asia/Tokyo timezone)."
+            f"Market hours are {open_t}–{close_t} JST ({profile.exchange_tz} timezone)."
         )
 
     return base
+
 
 def create_msg_delete():
     def delete_messages(state):
