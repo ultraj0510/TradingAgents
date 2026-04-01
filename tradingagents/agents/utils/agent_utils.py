@@ -28,19 +28,49 @@ def get_language_instruction() -> str:
     Internal debate agents stay in English for reasoning quality.
     """
     from tradingagents.dataflows.config import get_config
-    lang = get_config().get("output_language", "English")
+    config = get_config()
+    lang = config.get("output_language", "auto")
+
+    if lang.lower() == "auto":
+        # Derive from detected market
+        market = config.get("market", "us")
+        if market == "japan":
+            lang = "Japanese"
+        else:
+            return ""
+
     if lang.strip().lower() == "english":
         return ""
     return f" Write your entire response in {lang}."
 
 
 def build_instrument_context(ticker: str) -> str:
-    """Describe the exact instrument so agents preserve exchange-qualified tickers."""
-    return (
+    """Describe the exact instrument and market context so agents interpret data correctly."""
+    from tradingagents.dataflows.config import get_config
+    from tradingagents.dataflows.market_profile import detect_market, get_profile
+
+    config = get_config()
+    market = config.get("market", "auto")
+    if market == "auto":
+        market = detect_market(ticker)
+
+    profile = get_profile(market)
+
+    base = (
         f"The instrument to analyze is `{ticker}`. "
         "Use this exact ticker in every tool call, report, and recommendation, "
         "preserving any exchange suffix (e.g. `.TO`, `.L`, `.HK`, `.T`)."
     )
+
+    if market == "japan":
+        base += (
+            f" This is a Japanese stock traded on the Tokyo Stock Exchange (TSE/JPX). "
+            f"All prices and financial figures are denominated in Japanese Yen (JPY). "
+            f"Trading unit is typically 100 shares (単元株). "
+            f"Market hours are 09:00–15:30 JST (Asia/Tokyo timezone)."
+        )
+
+    return base
 
 def create_msg_delete():
     def delete_messages(state):
