@@ -170,6 +170,10 @@ class TradingAgentsGraph:
             run_config["data_vendors"]["news_data"] = "news_japan_rss"
             if run_config.get("output_language", "auto").lower() == "auto":
                 run_config["output_language"] = "Japanese"
+            # Pin insider transactions to yfinance; news_japan_rss has no implementation
+            run_config.setdefault("tool_vendors", {})
+            run_config["tool_vendors"] = dict(run_config.get("tool_vendors", {}))
+            run_config["tool_vendors"]["get_insider_transactions"] = "yfinance"
 
         return run_config
 
