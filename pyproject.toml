@@ -42,3 +42,8 @@ include = ["tradingagents*", "cli*"]
 
 [tool.setuptools.package-data]
 cli = ["static/*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
