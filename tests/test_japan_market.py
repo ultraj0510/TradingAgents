@@ -62,11 +62,10 @@ def test_is_trading_day_weekday_japan():
 
 def test_last_trading_day_from_saturday():
     from tradingagents.dataflows.market_calendar import last_trading_day
+    # 2025-01-04 is Saturday; 01-03 and 01-02 are year-end closures
     saturday = datetime.date(2025, 1, 4)
     result = last_trading_day(saturday, "japan")
-    # 前の金曜日 = 2025-01-03（ただし年始の場合は前営業日）
-    assert result < saturday
-    assert result.weekday() < 5  # 月〜金
+    assert result == datetime.date(2024, 12, 30)
 
 def test_last_trading_day_from_holiday():
     from tradingagents.dataflows.market_calendar import last_trading_day
