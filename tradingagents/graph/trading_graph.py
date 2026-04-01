@@ -155,6 +155,24 @@ class TradingAgentsGraph:
 
         return kwargs
 
+    def _build_run_config(self, company_name: str) -> dict:
+        """Build a run-specific config with market detection applied."""
+        from tradingagents.dataflows.market_profile import detect_market
+        resolved_market = self.config.get("market", "auto")
+        if resolved_market == "auto":
+            resolved_market = detect_market(company_name)
+
+        run_config = dict(self.config)
+        run_config["market"] = resolved_market
+        run_config["data_vendors"] = dict(self.config.get("data_vendors", {}))
+
+        if resolved_market == "japan":
+            run_config["data_vendors"]["news_data"] = "news_japan_rss"
+            if run_config.get("output_language", "auto").lower() == "auto":
+                run_config["output_language"] = "Japanese"
+
+        return run_config
+
     def _create_tool_nodes(self) -> Dict[str, ToolNode]:
         """Create tool nodes for different data sources using abstract methods."""
         return {
@@ -196,53 +214,44 @@ class TradingAgentsGraph:
 
         self.ticker = company_name
 
-        # ── Japan market auto-detection ──────────────────────────────────────
-        from tradingagents.dataflows.market_profile import detect_market
-        resolved_market = self.config.get("market", "auto")
-        if resolved_market == "auto":
-            resolved_market = detect_market(company_name)
-
-        if resolved_market == "japan":
-            # Build a run-specific config that activates Japan-specific vendors
-            run_config = dict(self.config)
-            run_config["market"] = resolved_market
-            run_config["data_vendors"] = dict(self.config.get("data_vendors", {}))
-            run_config["data_vendors"]["news_data"] = "news_japan_rss"
-            # Resolve output language if still "auto"
-            if run_config.get("output_language", "auto").lower() == "auto":
-                run_config["output_language"] = "Japanese"
-            set_config(run_config)
+        # ── Market-aware config for this run ────────────────────────────────
+        run_config = self._build_run_config(company_name)
+        set_config(run_config)
         # ────────────────────────────────────────────────────────────────────
 
-        # Initialize state
-        init_agent_state = self.propagator.create_initial_state(
-            company_name, trade_date
-        )
-        args = self.propagator.get_graph_args()
+        try:
+            # Initialize state
+            init_agent_state = self.propagator.create_initial_state(
+                company_name, trade_date
+            )
+            args = self.propagator.get_graph_args()
 
-        if self.debug:
-            # Debug mode with tracing
-            trace = []
-            for chunk in self.graph.stream(init_agent_state, **args):
-                if len(chunk["messages"]) == 0:
-                    pass
-                else:
-                    chunk["messages"][-1].pretty_print()
-                    trace.append(chunk)
+            if self.debug:
+                # Debug mode with tracing
+                trace = []
+                for chunk in self.graph.stream(init_agent_state, **args):
+                    if len(chunk["messages"]) == 0:
+                        pass
+                    else:
+                        chunk["messages"][-1].pretty_print()
+                        trace.append(chunk)
 
-            final_state = trace[-1]
-        else:
-            # Standard mode without tracing
-            final_state = self.graph.invoke(init_agent_state, **args)
+                final_state = trace[-1]
+            else:
+                # Standard mode without tracing
+                final_state = self.graph.invoke(init_agent_state, **args)
 
-        # Store current state for reflection
-        self.curr_state = final_state
+            # Store current state for reflection
+            self.curr_state = final_state
 
-        # Log state
-        self._log_state(trade_date, final_state)
+            # Log state
+            self._log_state(trade_date, final_state)
 
-        # Return decision and processed signal
-        return final_state, self.process_signal(final_state["final_trade_decision"])
+            # Return decision and processed signal
+            return final_state, self.process_signal(final_state["final_trade_decision"])
+        finally:
+            # Restore base config so subsequent runs start clean
+            set_config(self.config)
 
     def _log_state(self, trade_date, final_state):
         """Log the final state to a JSON file."""

@@ -175,29 +175,42 @@ def test_parse_rss_skips_undated_entries(monkeypatch):
 
 # ── integration: trading_graph config resolution ────────────────────────────
 
-def test_propagate_sets_japan_config(monkeypatch):
-    """When ticker ends with .T, propagate() should set japan config."""
-    from tradingagents.dataflows.config import set_config, get_config
+def test_build_run_config_japan():
+    """_build_run_config should produce Japan-specific config for .T tickers."""
     from tradingagents.default_config import DEFAULT_CONFIG
+    from tradingagents.dataflows.config import set_config
+
     set_config(DEFAULT_CONFIG.copy())
 
-    from tradingagents.dataflows.market_profile import detect_market
-    from tradingagents.dataflows.config import set_config as sc
+    # Build a minimal TradingAgentsGraph instance without initializing LLMs
+    # by directly testing _build_run_config logic via the class method
+    from unittest.mock import MagicMock, patch
 
-    ticker = "7203.T"
-    market = detect_market(ticker)
-    assert market == "japan"
+    with patch("tradingagents.graph.trading_graph.create_llm_client") as mock_llm:
+        mock_llm.return_value.get_llm.return_value = MagicMock()
+        from tradingagents.graph.trading_graph import TradingAgentsGraph
+        graph = TradingAgentsGraph.__new__(TradingAgentsGraph)
+        graph.config = DEFAULT_CONFIG.copy()
 
-    config = get_config()
-    run_config = dict(config)
-    run_config["market"] = market
-    run_config["data_vendors"] = dict(config.get("data_vendors", {}))
-    run_config["data_vendors"]["news_data"] = "news_japan_rss"
-    if run_config.get("output_language", "auto").lower() == "auto":
-        run_config["output_language"] = "Japanese"
-    sc(run_config)
+        result = graph._build_run_config("7203.T")
 
-    final = get_config()
-    assert final["market"] == "japan"
-    assert final["data_vendors"]["news_data"] == "news_japan_rss"
-    assert final["output_language"] == "Japanese"
+    assert result["market"] == "japan"
+    assert result["data_vendors"]["news_data"] == "news_japan_rss"
+    assert result["output_language"] == "Japanese"
+
+
+def test_build_run_config_us():
+    """_build_run_config should not change vendor config for US tickers."""
+    from tradingagents.default_config import DEFAULT_CONFIG
+    from tradingagents.dataflows.config import set_config
+
+    set_config(DEFAULT_CONFIG.copy())
+
+    from tradingagents.graph.trading_graph import TradingAgentsGraph
+    graph = TradingAgentsGraph.__new__(TradingAgentsGraph)
+    graph.config = DEFAULT_CONFIG.copy()
+
+    result = graph._build_run_config("AAPL")
+
+    assert result["market"] == "us"
+    assert result["data_vendors"]["news_data"] == "yfinance"
