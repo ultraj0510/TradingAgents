@@ -171,3 +171,33 @@ def test_parse_rss_skips_undated_entries(monkeypatch):
         datetime(2024, 1, 31),
     )
     assert "Undated article" not in result
+
+
+# ── integration: trading_graph config resolution ────────────────────────────
+
+def test_propagate_sets_japan_config(monkeypatch):
+    """When ticker ends with .T, propagate() should set japan config."""
+    from tradingagents.dataflows.config import set_config, get_config
+    from tradingagents.default_config import DEFAULT_CONFIG
+    set_config(DEFAULT_CONFIG.copy())
+
+    from tradingagents.dataflows.market_profile import detect_market
+    from tradingagents.dataflows.config import set_config as sc
+
+    ticker = "7203.T"
+    market = detect_market(ticker)
+    assert market == "japan"
+
+    config = get_config()
+    run_config = dict(config)
+    run_config["market"] = market
+    run_config["data_vendors"] = dict(config.get("data_vendors", {}))
+    run_config["data_vendors"]["news_data"] = "news_japan_rss"
+    if run_config.get("output_language", "auto").lower() == "auto":
+        run_config["output_language"] = "Japanese"
+    sc(run_config)
+
+    final = get_config()
+    assert final["market"] == "japan"
+    assert final["data_vendors"]["news_data"] == "news_japan_rss"
+    assert final["output_language"] == "Japanese"

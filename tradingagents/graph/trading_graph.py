@@ -196,6 +196,24 @@ class TradingAgentsGraph:
 
         self.ticker = company_name
 
+        # ── Japan market auto-detection ──────────────────────────────────────
+        from tradingagents.dataflows.market_profile import detect_market
+        resolved_market = self.config.get("market", "auto")
+        if resolved_market == "auto":
+            resolved_market = detect_market(company_name)
+
+        if resolved_market == "japan":
+            # Build a run-specific config that activates Japan-specific vendors
+            run_config = dict(self.config)
+            run_config["market"] = resolved_market
+            run_config["data_vendors"] = dict(self.config.get("data_vendors", {}))
+            run_config["data_vendors"]["news_data"] = "news_japan_rss"
+            # Resolve output language if still "auto"
+            if run_config.get("output_language", "auto").lower() == "auto":
+                run_config["output_language"] = "Japanese"
+            set_config(run_config)
+        # ────────────────────────────────────────────────────────────────────
+
         # Initialize state
         init_agent_state = self.propagator.create_initial_state(
             company_name, trade_date
