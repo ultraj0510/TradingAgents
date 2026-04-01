@@ -114,3 +114,60 @@ def test_get_global_news_japan_returns_string(monkeypatch):
 
     result = mod.get_global_news_japan("2024-01-15")
     assert isinstance(result, str)
+
+def test_parse_rss_to_articles_filters_by_date(monkeypatch):
+    """_parse_rss_to_articles should only include articles within the date window."""
+    import time
+    import tradingagents.dataflows.news_japan_rss as mod
+
+    # Build two fake entries: one in-range, one out-of-range
+    in_range_time = time.strptime("2024-01-10", "%Y-%m-%d")
+    out_of_range_time = time.strptime("2024-01-20", "%Y-%m-%d")
+
+    class FakeEntry:
+        def __init__(self, title, published_parsed):
+            self.title = title
+            self.published_parsed = published_parsed
+        def get(self, key, default=""):
+            return getattr(self, key, default)
+
+    class FakeFeed:
+        entries = [
+            FakeEntry("In-range article", in_range_time),
+            FakeEntry("Out-of-range article", out_of_range_time),
+        ]
+
+    monkeypatch.setattr(mod.feedparser, "parse", lambda *a, **kw: FakeFeed())
+
+    from datetime import datetime
+    result = mod._parse_rss_to_articles(
+        "http://fake.url",
+        datetime(2024, 1, 8),
+        datetime(2024, 1, 15),
+    )
+    assert "In-range article" in result
+    assert "Out-of-range article" not in result
+
+def test_parse_rss_skips_undated_entries(monkeypatch):
+    """Entries with no published_parsed should be skipped."""
+    import tradingagents.dataflows.news_japan_rss as mod
+
+    class FakeEntry:
+        def __init__(self, title):
+            self.title = title
+            self.published_parsed = None
+        def get(self, key, default=""):
+            return getattr(self, key, default)
+
+    class FakeFeed:
+        entries = [FakeEntry("Undated article")]
+
+    monkeypatch.setattr(mod.feedparser, "parse", lambda *a, **kw: FakeFeed())
+
+    from datetime import datetime
+    result = mod._parse_rss_to_articles(
+        "http://fake.url",
+        datetime(2024, 1, 1),
+        datetime(2024, 1, 31),
+    )
+    assert "Undated article" not in result

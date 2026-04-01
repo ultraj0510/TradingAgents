@@ -29,10 +29,11 @@ def _parse_rss_to_articles(feed_url: str, start_dt: datetime, end_dt: datetime) 
         link = entry.get("link", "")
         published = entry.get("published_parsed")
 
-        if published:
-            pub_dt = datetime(*published[:6])
-            if not (start_dt <= pub_dt <= end_dt + relativedelta(days=1)):
-                continue
+        if not published:
+            continue
+        pub_dt = datetime(*published[:6])
+        if not (start_dt <= pub_dt <= end_dt + relativedelta(days=1)):
+            continue
 
         articles += f"### {title}\n"
         if summary:
@@ -111,10 +112,11 @@ def get_global_news_japan(
             link = entry.get("link", "")
             published = entry.get("published_parsed")
 
-            if published:
-                pub_dt = datetime(*published[:6])
-                if pub_dt < start_dt or pub_dt > curr_dt + relativedelta(days=1):
-                    continue
+            if not published:
+                continue
+            pub_dt = datetime(*published[:6])
+            if pub_dt < start_dt or pub_dt > curr_dt + relativedelta(days=1):
+                continue
 
             articles += f"### {title}\n"
             if summary:
