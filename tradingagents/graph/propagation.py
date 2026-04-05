@@ -6,6 +6,7 @@ from tradingagents.agents.utils.agent_states import (
     InvestDebateState,
     RiskDebateState,
 )
+from tradingagents.dataflows.recent_context import generate_recent_context
 
 
 class Propagator:
@@ -19,8 +20,12 @@ class Propagator:
         self, company_name: str, trade_date: str
     ) -> Dict[str, Any]:
         """Create the initial state for the agent graph."""
+        recent_ctx = generate_recent_context(company_name, trade_date)
         return {
-            "messages": [("human", company_name)],
+            "messages": [
+                ("human", company_name),
+                ("human", recent_ctx),
+            ],
             "company_of_interest": company_name,
             "trade_date": str(trade_date),
             "investment_debate_state": InvestDebateState(
