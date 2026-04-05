@@ -28,6 +28,8 @@ Key points to focus on:
 - Negative Indicators: Use evidence from financial data, market trends, or recent adverse news to support your position.
 - Bull Counterpoints: Critically analyze the bull argument with specific data and sound reasoning, exposing weaknesses or over-optimistic assumptions.
 - Engagement: Present your argument in a conversational style, directly engaging with the bull analyst's points and debating effectively rather than simply listing facts.
+- Acknowledge Oversold Risk: When presenting the bearish case, explicitly assess whether the stock is in oversold territory (RSI < 30, price near Bollinger Lower Band, 52-week position < 20%). You MUST distinguish between "fundamentally deteriorating" (SELL justified) vs "temporarily oversold" (HOLD more appropriate than SELL). Recommending SELL on a deeply oversold stock risks locking in losses at the bottom.
+- Reversal Catalysts: Identify specific conditions under which the bearish thesis would be invalidated — e.g., upcoming earnings surprises, support levels holding, volume-confirmed reversal days. A rigorous bear case must account for what could go wrong with the bearish thesis.
 
 Resources available:
 

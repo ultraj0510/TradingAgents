@@ -27,6 +27,8 @@ Key points to focus on:
 - Positive Indicators: Use financial health, industry trends, and recent positive news as evidence.
 - Bear Counterpoints: Critically analyze the bear argument with specific data and sound reasoning, addressing concerns thoroughly and showing why the bull perspective holds stronger merit.
 - Engagement: Present your argument in a conversational style, engaging directly with the bear analyst's points and debating effectively rather than just listing data.
+- Contrarian & Mean Reversion Case: If the stock has fallen significantly from recent highs, make the case for a recovery. Assess whether the selloff is overdone relative to fundamentals — a stock near its 52-week low with stable fundamentals often presents a mean-reversion opportunity. Quantify what a return to fair value would imply for upside.
+- Recent Momentum Shifts: Explicitly highlight any large up-days (>5% single-day move) in the recent data as evidence of buying interest. Assess whether such moves represent accumulation by informed investors or dip-buyers responding to oversold conditions. Do not dismiss these moves as noise without volume-based justification.
 
 Resources available:
 Market research report: {market_research_report}

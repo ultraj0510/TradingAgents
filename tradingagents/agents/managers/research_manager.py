@@ -29,7 +29,13 @@ Additionally, develop a detailed investment plan for the trader. This should inc
 Your Recommendation: A decisive stance supported by the most convincing arguments.
 Rationale: An explanation of why these arguments lead to your conclusion.
 Strategic Actions: Concrete steps for implementing the recommendation.
-Take into account your past mistakes on similar situations. Use these insights to refine your decision-making and ensure you are learning and improving. Present your analysis conversationally, as if speaking naturally, without special formatting. 
+Take into account your past mistakes on similar situations. Use these insights to refine your decision-making and ensure you are learning and improving. Present your analysis conversationally, as if speaking naturally, without special formatting.
+
+IMPORTANT DECISION GUIDELINES:
+1. TIMEFRAME SEPARATION: Explicitly state your SHORT-TERM (1–4 weeks) and MEDIUM-TERM (1–6 months) outlook separately before giving a final recommendation. A stock can be a short-term BUY (oversold bounce) while being a medium-term HOLD.
+2. OVERSOLD PROTECTION: If the technical data indicates the stock is deeply oversold (RSI < 30, near 52-week low, price below Bollinger Lower Band), strongly bias toward HOLD rather than SELL. Selling at oversold extremes locks in losses and misses mean-reversion rebounds. Only recommend SELL when fundamentals are also deteriorating — not based on lagging indicators alone.
+3. RECENT PRICE ACTION WEIGHT: Give recent large single-day moves (>5%) significant weight as potential trend change signals. If such a move occurred within the past 5 trading days, it should influence your short-term outlook.
+4. LAGGING INDICATOR CAUTION: RSI, MACD, and SMA are backward-looking and confirm trends after the fact. Do not use them as the sole basis for a SELL recommendation if they conflict with recent price recovery signals.
 
 Here are your past reflections on mistakes:
 \"{past_memory_str}\"

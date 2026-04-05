@@ -44,7 +44,19 @@ Volatility Indicators:
 Volume-Based Indicators:
 - vwma: VWMA: A moving average weighted by volume. Usage: Confirm trends by integrating price action with volume data. Tips: Watch for skewed results from volume spikes; use in combination with other volume analyses.
 
-- Select indicators that provide diverse and complementary information. Avoid redundancy (e.g., do not select both rsi and stochrsi). Also briefly explain why they are suitable for the given market context. When you tool call, please use the exact name of the indicators provided above as they are defined parameters, otherwise your call will fail. Please make sure to call get_stock_data first to retrieve the CSV that is needed to generate indicators. Then use get_indicators with the specific indicator names. Write a very detailed and nuanced report of the trends you observe. Provide specific, actionable insights with supporting evidence to help traders make informed decisions."""
+Recent Price Action & Mean Reversion Indicators:
+- 5d_return: 5-day price return (%): Captures very recent short-term momentum. Usage: A large positive 5d_return after a prolonged decline may signal a mean-reversion bounce. Tips: Distinguish between dead-cat bounce and genuine reversal by cross-checking volume.
+- 20d_return: 20-day price return (%): Monthly momentum indicator. Usage: If strongly negative while RSI < 35, assess oversold conditions and potential rebound. Tips: Compare against broader market 20d return to identify relative weakness or strength.
+- 52w_position: 52-week position score (0–100%): Where the current price sits within its 52-week high/low range. Usage: Score < 20% = near 52-week low (potential value/mean-reversion zone); > 80% = near 52-week high (resistance zone). Tips: Use in conjunction with RSI; deeply oversold price near 52-week low is a stronger mean-reversion signal.
+- volume_ratio: Volume ratio (current day vs. 20-day average): >2.0 indicates unusual activity. Usage: Large up-day with high volume ratio = accumulation/buying interest; large down-day with high volume = distribution. Tips: A volume spike on a reversal day significantly increases signal reliability.
+
+- Select indicators that provide diverse and complementary information. Avoid redundancy (e.g., do not select both rsi and stochrsi). Also briefly explain why they are suitable for the given market context. When you tool call, please use the exact name of the indicators provided above as they are defined parameters, otherwise your call will fail. Please make sure to call get_stock_data first to retrieve the CSV that is needed to generate indicators. Then use get_indicators with the specific indicator names. Write a very detailed and nuanced report of the trends you observe. Provide specific, actionable insights with supporting evidence to help traders make informed decisions.
+
+CRITICAL ANALYSIS REQUIREMENTS:
+1. RECENT PRICE ACTION (last 5–10 trading days): Always prioritize and explicitly discuss. If the stock dropped >20% from recent highs, assess whether it is in oversold territory and evaluate mean-reversion potential.
+2. MEAN REVERSION ASSESSMENT: If RSI < 35 AND price is near the Bollinger Lower Band AND 52w_position < 25%, explicitly flag this as a potential mean-reversion buy signal. Distinguish clearly between "trend continuation" and "oversold bounce" scenarios.
+3. LARGE SINGLE-DAY MOVES: Any single-day move >5% must be explicitly analyzed. Such moves often represent regime changes. Assess whether volume confirmed the move and whether it indicates dip-buying by informed investors.
+4. TIMEFRAME SEPARATION: Separately state your SHORT-TERM (1–4 weeks) and MEDIUM-TERM (1–6 months) outlook. Do not conflate the two."""
             + """ Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read."""
             + get_language_instruction()
         )

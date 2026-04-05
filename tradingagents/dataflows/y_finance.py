@@ -6,6 +6,9 @@ import yfinance as yf
 import os
 from .stockstats_utils import StockstatsUtils, _clean_dataframe, yf_retry, load_ohlcv, filter_financials_by_date
 
+# Custom indicators computed directly from OHLCV — not delegated to stockstats
+_CUSTOM_INDICATORS = {"5d_return", "20d_return", "52w_position", "volume_ratio"}
+
 def get_YFin_data_online(
     symbol: Annotated[str, "ticker symbol of the company"],
     start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
@@ -127,6 +130,27 @@ def get_stock_stats_indicators_window(
             "Usage: Identify overbought (>80) or oversold (<20) conditions and confirm the strength of trends or reversals. "
             "Tips: Use alongside RSI or MACD to confirm signals; divergence between price and MFI can indicate potential reversals."
         ),
+        # Recent Price Action & Mean Reversion Indicators
+        "5d_return": (
+            "5-day price return (%): Captures very recent short-term momentum. "
+            "Usage: A large positive value after a prolonged decline may signal a mean-reversion bounce. "
+            "Tips: Distinguish dead-cat bounce from genuine reversal by cross-checking with volume_ratio."
+        ),
+        "20d_return": (
+            "20-day price return (%): Monthly momentum indicator. "
+            "Usage: If strongly negative while RSI < 35, assess oversold conditions and potential rebound. "
+            "Tips: Compare against broader market 20d return to identify relative weakness or strength."
+        ),
+        "52w_position": (
+            "52-week position score (0–100%): Where the current price sits within its 52-week high/low range. "
+            "Usage: Score < 20% = near 52-week low (potential value/mean-reversion zone); > 80% = near 52-week high (resistance zone). "
+            "Tips: Use with RSI; deeply oversold price near 52-week low is a stronger mean-reversion signal."
+        ),
+        "volume_ratio": (
+            "Volume ratio (current day vs. 20-day average volume): >2.0 indicates unusual activity. "
+            "Usage: Large up-day with high volume ratio = accumulation/buying interest; large down-day with high volume = distribution. "
+            "Tips: A volume spike on a reversal day significantly increases the signal reliability."
+        ),
     }
 
     if indicator not in best_ind_params:
@@ -185,6 +209,28 @@ def get_stock_stats_indicators_window(
     return result_str
 
 
+def _compute_custom_indicator(data: pd.DataFrame, indicator: str) -> pd.Series:
+    """Compute custom indicators not supported by stockstats."""
+    close = data["Close"]
+    volume = data["Volume"]
+
+    if indicator == "5d_return":
+        return close.pct_change(5) * 100
+    elif indicator == "20d_return":
+        return close.pct_change(20) * 100
+    elif indicator == "52w_position":
+        high_52w = close.rolling(252, min_periods=1).max()
+        low_52w = close.rolling(252, min_periods=1).min()
+        rng = high_52w - low_52w
+        # Avoid division by zero when high == low
+        return ((close - low_52w) / rng.replace(0, float("nan"))) * 100
+    elif indicator == "volume_ratio":
+        avg_vol = volume.rolling(20, min_periods=1).mean()
+        return volume / avg_vol.replace(0, float("nan"))
+    else:
+        raise ValueError(f"Unknown custom indicator: {indicator}")
+
+
 def _get_stock_stats_bulk(
     symbol: Annotated[str, "ticker symbol of the company"],
     indicator: Annotated[str, "technical indicator to calculate"],
@@ -195,27 +241,36 @@ def _get_stock_stats_bulk(
     Fetches data once and calculates indicator for all available dates.
     Returns dict mapping date strings to indicator values.
     """
-    from stockstats import wrap
-
     data = load_ohlcv(symbol, curr_date)
+
+    if indicator in _CUSTOM_INDICATORS:
+        # Custom indicators computed directly from OHLCV
+        date_col = data["Date"].dt.strftime("%Y-%m-%d")
+        values = _compute_custom_indicator(data, indicator)
+        result_dict = {}
+        for date_str, val in zip(date_col, values):
+            result_dict[date_str] = "N/A" if pd.isna(val) else f"{val:.2f}"
+        return result_dict
+
+    from stockstats import wrap
     df = wrap(data)
     df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    
+
     # Calculate the indicator for all rows at once
     df[indicator]  # This triggers stockstats to calculate the indicator
-    
+
     # Create a dictionary mapping date strings to indicator values
     result_dict = {}
     for _, row in df.iterrows():
         date_str = row["Date"]
         indicator_value = row[indicator]
-        
+
         # Handle NaN/None values
         if pd.isna(indicator_value):
             result_dict[date_str] = "N/A"
         else:
             result_dict[date_str] = str(indicator_value)
-    
+
     return result_dict
 
 
